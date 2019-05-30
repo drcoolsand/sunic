@@ -1,0 +1,542 @@
+PROCEDURE XXETMS_RCPT_JOB
+IS
+CURSOR c 
+IS 
+
+/*SELECT
+       'ETMS'
+       || XXETMS_RCPT_HDRSTG_TBL_s.NEXTVAL 
+       TRAN_ID, 
+       'CREATE APPLY' TRAN_TYPE, --Debit --Fro Increamental Data
+       'Receipt' TRAN_SUBTYPE, 
+       SYSDATE TRAN_CREATION_DATE,
+       --'31-JUL-2018' TRAN_CREATION_DATE, 
+       'ETMS' SOURCE_APP_NAME, 
+       trd.invc_no invoice_no, 
+       trd.invc_dt invoice_date, 
+       trd.bill_no BILL_NO,
+       trd.bill_dt DT_BILL,
+       trd.rcpt_no receipt_no, 
+       trd.rcpt_dt receipt_date, 
+       trd.gstin_rcpt_no gst_receipt_no,
+       tr.REGION_ALPHA_CD region,
+       trd.trml_ID terminal_id, 
+       trd.PARTY_CD party_code,
+       (SELECT MAX(customer_id) FROM XXETMS_CUSTOMER_INFO tp
+        WHERE  tp.customer_id IS NOT NULL
+        AND    tp.party_cd  = trd.party_cd
+        AND    tp.trml_id   = trd.trml_id
+        AND    tp.party_typ = trd.party_flg
+       ) customer_id,
+       (SELECT MAX(tp.PARTY_TYP) FROM XXETMS_CUSTOMER_INFO tp
+        WHERE  tp.customer_id IS NOT NULL
+        AND    tp.party_cd = trd.party_cd
+        AND    tp.trml_id  = trd.trml_id
+        AND    tp.party_typ = trd.party_flg
+       ) type,
+        trd.trml_ID pay_terminal_id,
+        NULL LAST_UPDATED_BY,
+        trd.LST_UPD_DT last_updated_date,
+        NULL RCPTURL,
+        NULL FILE_NAME,
+        NULL FILE_TYPE,
+        NULL FILE_DATE,
+        NULL FOLDER_ID,
+        NULL SOAP_INVOKE, 
+        NULL SOAP_RESPONSE, 
+        NULL FINAL_PROCESSED_FLAG, 
+        NULL FINAL_ERROR_MSG,
+        SYSDATE RUN_DATETIME
+FROM    ttc_rcptdtls trd,
+        tmc_trml ttl,
+        tmc_region tr
+WHERE  1 = 1
+AND    trd.trml_ID  = ttl.trml_cd
+AND    tr.region_cd = ttl.region_cd */ 
+--AND   trd.RCPT_NET_PAYABLE_AMT > trd.RCPT_NET_PAID_AMT;
+SELECT
+       'ETMS'
+       || XXETMS_RCPT_HDRSTG_TBL_s.NEXTVAL 
+       TRAN_ID, 
+       'CREATE APPLY' TRAN_TYPE, --Debit --Fro Increamental Data
+       'Receipt' TRAN_SUBTYPE, 
+       SYSDATE TRAN_CREATION_DATE,
+       --'31-JUL-2018' TRAN_CREATION_DATE, 
+       'ETMS' SOURCE_APP_NAME, 
+       trd.invc_no invoice_no, 
+       trd.invc_dt invoice_date, 
+       trd.bill_no BILL_NO,
+       trd.bill_dt DT_BILL,
+       trd.rcpt_no receipt_no, 
+       trd.rcpt_dt receipt_date, 
+       trd.gstin_rcpt_no gst_receipt_no,
+       tr.REGION_ALPHA_CD region,
+       trd.trml_ID terminal_id, 
+       --trd.PARTY_CD party_code,
+      -- NVL(tiad.PAY_PARTY_CD,trd.PARTY_CD) party_code,  --COMMENTED ON 22-APR-2019 FRO LOACTION PROBLEM
+       NVL2((SELECT MAX(customer_id) FROM XXETMS_CUSTOMER_INFO tp
+        WHERE  tp.customer_id IS NOT NULL
+        AND    tp.party_cd  = tiad.PAY_PARTY_CD--trd.party_cd
+        AND    tp.trml_id   = tiad.trml_id--trd.trml_id
+        AND    tp.party_typ = tiad.PAY_PARTY_FLG--trd.party_flg
+       ),tiad.PAY_PARTY_CD,trd.PARTY_CD) PARTY_CODE,
+       NVL ((SELECT MAX(customer_id) FROM XXETMS_CUSTOMER_INFO tp
+        WHERE  tp.customer_id IS NOT NULL
+        AND    tp.party_cd  = tiad.PAY_PARTY_CD--trd.party_cd
+        AND    tp.trml_id   = tiad.trml_id--trd.trml_id
+        AND    tp.party_typ = tiad.PAY_PARTY_FLG--trd.party_flg
+       ),
+       (SELECT MAX(customer_id) FROM XXETMS_CUSTOMER_INFO tp
+        WHERE  tp.customer_id IS NOT NULL
+        AND    tp.party_cd  = trd.party_cd
+        AND    tp.trml_id   = trd.trml_id
+        AND    tp.party_typ = trd.party_flg
+       )) customer_id,
+       NVL((SELECT MAX(tp.PARTY_TYP) FROM XXETMS_CUSTOMER_INFO tp
+        WHERE  tp.customer_id IS NOT NULL
+        AND    tp.party_cd  = tiad.PAY_PARTY_CD--trd.party_cd
+        AND    tp.trml_id   = tiad.trml_id--trd.trml_id
+        AND    tp.party_typ = tiad.PAY_PARTY_FLG--trd.party_flg
+       ),
+       (SELECT MAX(tp.PARTY_TYP) FROM XXETMS_CUSTOMER_INFO tp
+        WHERE  tp.customer_id IS NOT NULL
+        AND    tp.party_cd  = trd.party_cd
+        AND    tp.trml_id   = trd.trml_id
+        AND    tp.party_typ = trd.party_flg
+       )) type,
+        --trd.trml_ID pay_terminal_id,
+        NVL(tiad.trml_id,trd.trml_ID) pay_terminal_id,
+        NULL LAST_UPDATED_BY,
+        trd.LST_UPD_DT last_updated_date,
+        NULL RCPTURL,
+        NULL FILE_NAME,
+        NULL FILE_TYPE,
+        NULL FILE_DATE,
+        NULL FOLDER_ID,
+        NULL SOAP_INVOKE, 
+        NULL SOAP_RESPONSE, 
+        NULL FINAL_PROCESSED_FLAG, 
+        NULL FINAL_ERROR_MSG,
+        SYSDATE RUN_DATETIME
+FROM    ETMS.ttc_rcptdtls@etmslive trd,
+        ETMS.ttc_invcaddressdtls@etmslive tiad,
+        ETMS.tmc_trml@etmslive ttl,
+        ETMS.tmc_region@etmslive tr
+WHERE  1 = 1
+AND    trd.invc_no = tiad.invc_no(+)
+AND    trd.invc_dt = tiad.invc_dt(+)
+--AND    trd.trml_id = tiad.trml_id 
+AND    trd.GSTIN_RCPT_NO = tiad.GSTIN_RCPT_NO(+)
+AND    trd.trml_ID  = ttl.trml_cd
+AND    tr.region_cd = ttl.region_cd
+AND   trunc(trd.lst_upd_dt) > '30-MAR-2019' 
+AND  trd.lst_upd_dt > nvl((select max(RUN_DATETIME) from XXETMS_RCPT_HDRSTG_TBL),(sysdate-1));
+CURSOR c2 (p_gstin_rcpt_no VARCHAR2,
+           p_terminal_id VARCHAR2,
+           p_rcpt_no_hdr VARCHAR2,
+           p_rcpt_dt DATE,
+           p_bill_no VARCHAR2,
+           p_dt_bill DATE
+          )
+IS
+/*SELECT   XXETMS_RCPT_LINESTG_TBL_S.nextval ltran_id,
+        --i.tran_id,
+        SYSDATE LTRAN_CREATION_DATE,
+        --trpd.pda_typ
+        DECODE(SUBSTR(trpd.INST_PDA_NO,1,4),'CPD-','R',trpd.pda_typ) 
+        || (DECODE (trpd.pay_mode,'L','CA', (SELECT DECODE(trpd.pay_mode,'D','DD','O','PO',tbpm.PAY_MODE_DESC) FROM TSC_BLPAYMODE tbpm
+                                            WHERE  tbpm.pay_mode = trpd.PAY_MODE
+                                            )
+                   ) 
+           ) PAY_MODE,
+        trpd.rcpt_no RECEIPT_NO, 
+        trpd.rcpt_dt RECEIPT_DATE, 
+        trpd.INST_AMT  RECEIPT_AMOUNT,
+        tiad.bill_no BILL_NO, 
+        tiad.bill_dt DT_BILL, 
+        tiad.PAY_PARTY_CD PAY_DTL_PARTY_CODE,
+        trpd.INST_PDA_NO INSTRUMENT_NO, 
+        trpd.INST_DT INSTRUMENT_DATE, 
+        trpd.BANK_NAM BANK_NAME, 
+        NULL IFSC_CODE, 
+        NULL MICR_CODE, 
+        trpd.PRTY_EXCESS_AMT EXCESS_AMOUNT, 
+        (SELECT MAX(customer_id) FROM XXETMS_CUSTOMER_INFO tp
+          WHERE  tp.customer_id IS NOT NULL
+        AND    tp.party_cd  = trpd.pay_party_cd
+        AND    tp.trml_id   = trpd.trml_id
+        AND    tp.party_typ = trpd.pay_party_flg
+        ) PAY_DTL_CUSTOMER_ID, 
+        trpd.TRML_ID PAY_DTL_TERMINAL_ID, 
+        NULL SOAP_INVOKE, 
+        NULL SOAP_RESPONSE, 
+        NULL FINAL_PROCESSED_FLAG, 
+        NULL FINAL_ERROR_MSG
+FROM    --ttc_rcptpayacty trpa, 
+        ttc_invcaddressdtls tiad, 
+        ttc_rcptpaydtls trpd
+WHERE   1 = 1
+AND     tiad.rcpt_no = trpd.rcpt_no
+AND tiad.gstin_rcpt_no = p_gstin_rcpt_no
+AND trpd.trml_id = p_terminal_id
+AND trpd.rcpt_no = p_rcpt_no_hdr
+AND trpd.rcpt_dt = p_rcpt_dt;*/
+SELECT * FROM
+(
+SELECT   NULL ltran_id,--XXETMS_RCPT_LINESTG_TBL_S.nextval ltran_id,
+        --i.tran_id,
+        SYSDATE LTRAN_CREATION_DATE,
+        --trpd.pda_typ
+        DECODE(SUBSTR(trpd.INST_PDA_NO,1,4),'CPD-','R',trpd.pda_typ) 
+        || (DECODE (trpd.pay_mode,'L','CA', (SELECT DECODE(trpd.pay_mode,'D','DD','O','PO',tbpm.PAY_MODE_DESC) FROM ETMS.TSC_BLPAYMODE@etmslive tbpm
+                                            WHERE  tbpm.pay_mode = trpd.PAY_MODE
+                                            )
+                   ) 
+           ) PAY_MODE,
+        trpd.rcpt_no RECEIPT_NO, 
+        trpd.rcpt_dt RECEIPT_DATE, 
+        trpd.INST_AMT  RECEIPT_AMOUNT,
+        tiad.bill_no BILL_NO, 
+        tiad.bill_dt DT_BILL, 
+        trpd.PAY_PARTY_CD PAY_DTL_PARTY_CODE,
+        trpd.INST_PDA_NO INSTRUMENT_NO, 
+        trpd.INST_DT INSTRUMENT_DATE, 
+        trpd.BANK_NAM BANK_NAME, 
+        NULL IFSC_CODE, 
+        NULL MICR_CODE, 
+        trpd.PRTY_EXCESS_AMT EXCESS_AMOUNT, 
+        (SELECT MAX(customer_id) FROM XXETMS_CUSTOMER_INFO tp
+          WHERE  tp.customer_id IS NOT NULL
+        AND    tp.party_cd  = trpd.pay_party_cd
+        AND    tp.trml_id   = trpd.trml_id
+        AND    tp.party_typ = trpd.pay_party_flg
+        ) PAY_DTL_CUSTOMER_ID, 
+        trpd.TRML_ID PAY_DTL_TERMINAL_ID, 
+        NULL SOAP_INVOKE, 
+        NULL SOAP_RESPONSE, 
+        NULL FINAL_PROCESSED_FLAG, 
+        NULL FINAL_ERROR_MSG
+FROM    --ttc_rcptpayacty trpa, 
+        ETMS.ttc_invcaddressdtls@etmslive tiad, 
+        ETMS.ttc_rcptpaydtls@etmslive trpd
+WHERE   1 = 1
+AND SUBSTR(tiad.invc_no,1,3) != 'DUP'
+AND     tiad.rcpt_no (+) = trpd.rcpt_no
+--AND     trpd.pay_mode NOT IN ('P','L')
+AND     trpd.PDA_TYP IS NULL 
+AND trpd.gstin_rcpt_no = p_gstin_rcpt_no
+AND trpd.trml_id = p_terminal_id
+AND trpd.rcpt_no = p_rcpt_no_hdr
+AND trpd.rcpt_dt = p_rcpt_dt
+AND tiad.bill_no = p_bill_no
+AND tiad.bill_dt = p_dt_bill
+UNION
+SELECT  NULL ltran_id,--XXETMS_RCPT_LINESTG_TBL_S.nextval ltran_id,
+        --i.tran_id,
+        SYSDATE LTRAN_CREATION_DATE,
+        --trpd.pda_typ
+        DECODE(SUBSTR(trpd.INST_PDA_NO,1,4),'CPD-','R',trpd.pda_typ) 
+        || (DECODE (trpd.pay_mode,'L','CA', (SELECT DECODE(trpd.pay_mode,'D','DD','O','PO',tbpm.PAY_MODE_DESC) FROM ETMS.TSC_BLPAYMODE@etmslive tbpm
+                                            WHERE  tbpm.pay_mode = trpd.PAY_MODE
+                                            )
+                   ) 
+           ) PAY_MODE,
+        trpd.rcpt_no RECEIPT_NO, 
+        trpd.rcpt_dt RECEIPT_DATE, 
+        SUM(trpd.INST_AMT)  RECEIPT_AMOUNT,
+        tiad.bill_no BILL_NO, 
+        tiad.bill_dt DT_BILL, 
+        trpd.PAY_PARTY_CD PAY_DTL_PARTY_CODE,
+        NULL INSTRUMENT_NO, 
+        NULL INSTRUMENT_DATE, 
+        NULL BANK_NAME, 
+        NULL IFSC_CODE, 
+        NULL MICR_CODE, 
+        trpd.PRTY_EXCESS_AMT EXCESS_AMOUNT, 
+        (SELECT MAX(customer_id) FROM XXETMS_CUSTOMER_INFO tp
+          WHERE  tp.customer_id IS NOT NULL
+        AND    tp.party_cd  = trpd.pay_party_cd
+        AND    tp.trml_id   = trpd.trml_id
+        AND    tp.party_typ = trpd.pay_party_flg
+        ) PAY_DTL_CUSTOMER_ID, 
+        trpd.TRML_ID PAY_DTL_TERMINAL_ID, 
+        NULL SOAP_INVOKE, 
+        NULL SOAP_RESPONSE, 
+        NULL FINAL_PROCESSED_FLAG, 
+        NULL FINAL_ERROR_MSG
+FROM    --ttc_rcptpayacty trpa, 
+        ETMS.ttc_invcaddressdtls@etmslive tiad, 
+        ETMS.ttc_rcptpaydtls@etmslive trpd
+WHERE   1 = 1
+AND     tiad.rcpt_no(+) = trpd.rcpt_no
+--AND     trpd.pay_mode IN ('P','L') 
+AND     trpd.PDA_TYP IS NOT NULL
+AND trpd.gstin_rcpt_no = p_gstin_rcpt_no
+AND trpd.trml_id = p_terminal_id
+AND trpd.rcpt_no = p_rcpt_no_hdr
+AND trpd.rcpt_dt = p_rcpt_dt
+AND tiad.bill_no = p_bill_no
+AND tiad.bill_dt = p_dt_bill
+GROUP BY DECODE(SUBSTR(trpd.INST_PDA_NO,1,4),'CPD-','R',trpd.pda_typ),--trpd.pda_typ,
+        trpd.pay_mode,
+          trpd.rcpt_no, 
+        trpd.rcpt_dt, 
+        tiad.bill_no, 
+        tiad.bill_dt, 
+        trpd.PAY_PARTY_CD,
+        trpd.pay_party_flg,
+        trpd.pay_party_cd,
+        trpd.PRTY_EXCESS_AMT,
+        trpd.TRML_ID
+UNION
+SELECT  NULL ltran_id,
+        SYSDATE LTRAN_CREATION_DATE,
+        DECODE(SUBSTR(trpd.INST_PDA_NO,1,4),'CPD-','R',trpd.pda_typ) 
+        || (DECODE (trpd.pay_mode,'L','CA', (SELECT DECODE(trpd.pay_mode,'D','DD','O','PO',tbpm.PAY_MODE_DESC) FROM ETMS.TSC_BLPAYMODE@etmslive tbpm
+                                            WHERE  tbpm.pay_mode = trpd.PAY_MODE
+                                            )
+                   ) 
+           ) PAY_MODE,
+        trpd.rcpt_no RECEIPT_NO, 
+        trpd.rcpt_dt RECEIPT_DATE, 
+        --SUM(trpd.INST_AMT)  RECEIPT_AMOUNT,  --COMMENTED BY GOSH ON 06-APR-2019
+        trpd.INST_AMT  RECEIPT_AMOUNT,
+        trd.bill_no BILL_NO, 
+        trd.bill_dt DT_BILL, 
+        trpd.PAY_PARTY_CD PAY_DTL_PARTY_CODE,
+        NULL INSTRUMENT_NO, 
+        NULL INSTRUMENT_DATE, 
+        NULL BANK_NAME, 
+        NULL IFSC_CODE, 
+        NULL MICR_CODE, 
+        trpd.PRTY_EXCESS_AMT EXCESS_AMOUNT, 
+        (SELECT MAX(customer_id) FROM XXETMS_CUSTOMER_INFO tp
+          WHERE  tp.customer_id IS NOT NULL
+        AND    tp.party_cd  = trpd.pay_party_cd
+        AND    tp.trml_id   = trpd.trml_id
+        AND    tp.party_typ = trpd.pay_party_flg
+        ) PAY_DTL_CUSTOMER_ID, 
+        trpd.TRML_ID PAY_DTL_TERMINAL_ID, 
+        NULL SOAP_INVOKE, 
+        NULL SOAP_RESPONSE, 
+        NULL FINAL_PROCESSED_FLAG, 
+        NULL FINAL_ERROR_MSG
+FROM    ETMS.ttc_rcptpayacty@etmslive trpa, 
+        ETMS.ttc_rcptpaydtls@etmslive trpd,
+        ETMS.ttc_rcptdtls@etmslive trd
+WHERE   1 = 1
+AND     trpa.rcpt_no(+) = trpd.rcpt_no 
+AND     trpa.rcpt_dt(+) = trpd.rcpt_dt
+AND     trd.invc_no(+) = trpa.invc_no 
+AND     trd.invc_dt(+) = trpa.invc_dt
+AND SUBSTR(trd.invc_no,1,3) = 'DUP' 
+AND trpd.gstin_rcpt_no = p_gstin_rcpt_no
+AND trpd.trml_id = p_terminal_id
+AND trpd.rcpt_no = p_rcpt_no_hdr
+AND trpd.rcpt_dt = p_rcpt_dt
+AND trd.bill_no = p_bill_no
+AND trd.bill_dt = p_dt_bill
+GROUP BY DECODE(SUBSTR(trpd.INST_PDA_NO,1,4),'CPD-','R',trpd.pda_typ),--trpd.pda_typ,
+        trpd.pay_mode,
+        trpd.rcpt_no, 
+        trpd.rcpt_dt, 
+        trd.bill_no, 
+        trd.bill_dt, 
+        trpd.PAY_PARTY_CD,
+        trpd.pay_party_flg,
+        trpd.pay_party_cd,
+        trpd.PRTY_EXCESS_AMT,
+        trpd.TRML_ID,trpd.INST_AMT
+--------------------------23-MAR-2019-----------------------------
+UNION
+SELECT  NULL ltran_id,
+        SYSDATE LTRAN_CREATION_DATE,
+        DECODE(SUBSTR(trpd.INST_PDA_NO,1,4),'CPD-','R',trpd.pda_typ) 
+        || (DECODE (trpd.pay_mode,'L','CA', (SELECT DECODE(trpd.pay_mode,'D','DD','O','PO',tbpm.PAY_MODE_DESC) FROM ETMS.TSC_BLPAYMODE@etmslive tbpm
+                                            WHERE  tbpm.pay_mode = trpd.PAY_MODE
+                                            )
+                   ) 
+           ) PAY_MODE,
+        trpd.rcpt_no RECEIPT_NO, 
+        trpd.rcpt_dt RECEIPT_DATE, 
+        --SUM(trpd.INST_AMT)  RECEIPT_AMOUNT, --COMMENTED BY GOSH ON 06-APR-2019
+        trpd.inst_amt RECEIPT_AMOUNT,
+        trd.bill_no BILL_NO, 
+        trd.bill_dt DT_BILL, 
+        trpd.PAY_PARTY_CD PAY_DTL_PARTY_CODE,
+        NULL INSTRUMENT_NO, 
+        NULL INSTRUMENT_DATE, 
+        NULL BANK_NAME, 
+        NULL IFSC_CODE, 
+        NULL MICR_CODE, 
+        trpd.PRTY_EXCESS_AMT EXCESS_AMOUNT, 
+        (SELECT MAX(customer_id) FROM XXETMS_CUSTOMER_INFO tp
+          WHERE  tp.customer_id IS NOT NULL
+        AND    tp.party_cd  = trpd.pay_party_cd
+        AND    tp.trml_id   = trpd.trml_id
+        AND    tp.party_typ = trpd.pay_party_flg
+        ) PAY_DTL_CUSTOMER_ID, 
+        trpd.TRML_ID PAY_DTL_TERMINAL_ID, 
+        NULL SOAP_INVOKE, 
+        NULL SOAP_RESPONSE, 
+        NULL FINAL_PROCESSED_FLAG, 
+        NULL FINAL_ERROR_MSG
+FROM    ETMS.ttc_rcptpayacty@etmslive trpa, 
+        ETMS.ttc_rcptpaydtls@etmslive trpd,
+        ETMS.ttc_rcptdtls@etmslive trd
+WHERE   1 = 1
+AND     trpa.rcpt_no(+) = trpd.rcpt_no 
+AND     trpa.rcpt_dt(+) = trpd.rcpt_dt
+AND     trd.invc_no(+) = trpa.invc_no 
+AND     trd.invc_dt(+) = trpa.invc_dt
+AND SUBSTR(trd.invc_no,1,3) !='DUP' 
+AND trpd.gstin_rcpt_no = p_gstin_rcpt_no
+AND trpd.trml_id = p_terminal_id
+AND trpd.rcpt_no = p_rcpt_no_hdr
+AND trpd.rcpt_dt = p_rcpt_dt
+AND trd.bill_no = p_bill_no
+AND trd.bill_dt = p_dt_bill
+GROUP BY DECODE(SUBSTR(trpd.INST_PDA_NO,1,4),'CPD-','R',trpd.pda_typ),--trpd.pda_typ,
+        trpd.pay_mode,
+        trpd.rcpt_no, 
+        trpd.rcpt_dt, 
+        trd.bill_no, 
+        trd.bill_dt, 
+        trpd.PAY_PARTY_CD,
+        trpd.pay_party_flg,
+        trpd.pay_party_cd,
+        trpd.PRTY_EXCESS_AMT,
+        trpd.TRML_ID,trpd.inst_amt
+-----------------------END 23-MAR-2019--------------------------                  
+)
+ORDER BY RECEIPT_AMOUNT;
+BEGIN
+ FOR i IN c LOOP
+ ---------------------Insert Header Record -----------------     
+  BEGIN
+   INSERT INTO XXETMS_RCPT_HDRSTG_TBL
+          (TRAN_ID, 
+          TRAN_TYPE, 
+          TRAN_SUBTYPE, 
+          TRAN_CREATION_DATE, 
+          SOURCE_APP_NAME, 
+          INVOICE_NO, 
+          INVOICE_DATE, 
+          RECEIPT_NO, 
+          RECEIPT_DATE, 
+          BILL_NO, 
+          DT_BILL, 
+          GST_RECEIPT_NO, 
+          REGION, 
+          TERMINAL_ID, 
+          PARTY_CODE, 
+          CUSTOMER_ID, 
+          TYPE, 
+          PAY_TERMINAL_ID, 
+          LAST_UPDATED_BY, 
+          LAST_UPDATED_DATE, 
+          RCPTURL, 
+          FILE_NAME, 
+          FILE_TYPE, 
+          FILE_DATE, 
+          FOLDER_ID, 
+          SOAP_INVOKE, 
+          SOAP_RESPONSE, 
+          FINAL_PROCESSED_FLAG, 
+          FINAL_ERROR_MSG, RUN_DATETIME)
+    --SELECT
+  VALUES( i.TRAN_ID, 
+          i.TRAN_TYPE, 
+          i.TRAN_SUBTYPE, 
+          i.TRAN_CREATION_DATE, 
+          i.SOURCE_APP_NAME, 
+          i.INVOICE_NO, 
+          i.INVOICE_DATE, 
+          i.RECEIPT_NO, 
+          i.RECEIPT_DATE, 
+          i.BILL_NO, 
+          i.DT_BILL, 
+          i.GST_RECEIPT_NO, 
+          i.REGION, 
+          i.TERMINAL_ID, 
+          i.PARTY_CODE, 
+          i.CUSTOMER_ID, 
+          i.TYPE, 
+          i.PAY_TERMINAL_ID, 
+          i.LAST_UPDATED_BY, 
+          i.LAST_UPDATED_DATE, 
+          i.RCPTURL, 
+          i.FILE_NAME, 
+          i.FILE_TYPE, 
+          i.FILE_DATE, 
+          i.FOLDER_ID, 
+          i.SOAP_INVOKE, 
+          i.SOAP_RESPONSE, 
+          i.FINAL_PROCESSED_FLAG, 
+          i.FINAL_ERROR_MSG,i.RUN_DATETIME);
+  -- FROM DUAl;
+   EXCEPTION
+         WHEN OTHERS
+         THEN
+            NULL;
+   END;
+FOR j IN c2 (i.GST_RECEIPT_NO, i.pay_terminal_id, i.RECEIPT_NO, i.RECEIPT_DATE, i.BILL_NO, i.DT_BILL )
+LOOP   
+ BEGIN              
+INSERT INTO XXETMS_RCPT_LINESTG_TBL
+        (LTRAN_ID, 
+         H_TRAN_ID,
+         LTRAN_CREATION_DATE, 
+         PAY_MODE, 
+         RECEIPT_NO, 
+         RECEIPT_DATE, 
+         RECEIPT_AMOUNT, 
+         BILL_NO, 
+         DT_BILL, 
+         PAY_DTL_PARTY_CODE, 
+         INSTRUMENT_NO, 
+         INSTRUMENT_DATE, 
+         BANK_NAME, 
+         IFSC_CODE, 
+         MICR_CODE, 
+         EXCESS_AMOUNT, 
+         PAY_DTL_CUSTOMER_ID, 
+         PAY_DTL_TERMINAL_ID, 
+         SOAP_INVOKE, 
+         SOAP_RESPONSE, 
+         FINAL_PROCESSED_FLAG, 
+         FINAL_ERROR_MSG) 
+  VALUES(j.LTRAN_ID, 
+         i.TRAN_ID,
+         j.LTRAN_CREATION_DATE, 
+         j.PAY_MODE, 
+         j.RECEIPT_NO, 
+         j.RECEIPT_DATE, 
+         j.RECEIPT_AMOUNT, 
+         j.BILL_NO, 
+         j.DT_BILL, 
+         j.PAY_DTL_PARTY_CODE, 
+         j.INSTRUMENT_NO, 
+         j.INSTRUMENT_DATE, 
+         j.BANK_NAME, 
+         j.IFSC_CODE, 
+         j.MICR_CODE, 
+         j.EXCESS_AMOUNT, 
+         j.PAY_DTL_CUSTOMER_ID, 
+         j.PAY_DTL_TERMINAL_ID, 
+         j.SOAP_INVOKE, 
+         j.SOAP_RESPONSE, 
+         j.FINAL_PROCESSED_FLAG, 
+         j.FINAL_ERROR_MSG
+        ); 
+       EXCEPTION
+            WHEN OTHERS
+            THEN
+               NULL;
+       END;
+END LOOP;
+   COMMIT;
+ END LOOP;   
+EXCEPTION
+   WHEN OTHERS  THEN raise_application_error (-20110, 'PROBLEM IN XXETMS_RCPT_JOB' || SQLERRM );
+END XXETMS_RCPT_JOB;
